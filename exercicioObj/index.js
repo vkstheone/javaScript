@@ -81,7 +81,3 @@ adicionarLivro("O Senhor dos Anéis", "J.R.R. Tolkien", 10); //
 
 listarLivros();
 
-atualizarQuantidade("1984", 7);
-removerLivro("O Senhor dos Anéis");
-
-listarLivros();

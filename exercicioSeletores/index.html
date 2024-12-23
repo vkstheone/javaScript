@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Curtidas</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      line-height: 1.6;
+    }
+    input, button {
+      padding: 10px;
+      margin: 5px 0;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+  </style>
+</head>
+<body>
+  <h1>Sistema de Curtidas</h1>
+  <input type="text" id="nome" placeholder="Digite seu nome">
+  <button onclick="adicionarCurtida()">Curtir</button>
+  <p id="mensagemCurtidas">Ninguém curtiu</p>
+
+  <script>
+    // Array para armazenar os nomes das pessoas que curtiram
+    const listaCurtidas = [];
+
+    function adicionarCurtida() {
+      const nomeInput = document.getElementById("nome").value.trim();
+
+      // Validação do nome
+      if (!nomeInput) {
+        alert("Por favor, digite um nome válido!");
+        return;
+      }
+
+      // Verifica se o nome já está na lista
+      if (listaCurtidas.includes(nomeInput)) {
+        alert(`${nomeInput} já curtiu!`);
+        return;
+      }
+
+      // Adiciona o nome ao array
+      listaCurtidas.push(nomeInput);
+
+      // Atualiza a mensagem de curtidas
+      atualizarMensagemCurtidas();
+
+      // Limpa o campo de texto
+      document.getElementById("nome").value = "";
+    }
+
+    function atualizarMensagemCurtidas() {
+      const mensagemCurtidas = document.getElementById("mensagemCurtidas");
+
+      if (listaCurtidas.length === 0) {
+        mensagemCurtidas.textContent = "Ninguém curtiu";
+      } else if (listaCurtidas.length === 1) {
+        mensagemCurtidas.textContent = `${listaCurtidas[0]} curtiu`;
+      } else if (listaCurtidas.length === 2) {
+        mensagemCurtidas.textContent = `${listaCurtidas[0]} e ${listaCurtidas[1]} curtiram`;
+      } else {
+        mensagemCurtidas.textContent = `${listaCurtidas[0]}, ${listaCurtidas[1]} e mais ${listaCurtidas.length - 2} pessoas curtiram`;
+      }
+    }
+  </script>
+</body>
+</html>
