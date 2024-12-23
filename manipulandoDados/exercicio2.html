@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lista de Tarefas</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      line-height: 1.6;
+    }
+    input, button {
+      padding: 10px;
+      margin: 5px 5px 0 0;
+    }
+    button {
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .btn-excluir {
+      background-color: #f44336;
+      margin-left: 10px;
+    }
+    .btn-excluir:hover {
+      background-color: #d32f2f;
+    }
+    .tarefas {
+      margin-top: 20px;
+    }
+    .tarefa {
+      display: flex;
+      align-items: center;
+      margin: 5px 0;
+    }
+    .tarefa span {
+      margin-left: 10px;
+    }
+    .tarefa.concluida span {
+      text-decoration: line-through;
+      color: green;
+    }
+    .tarefa.nao-concluida span {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <h1>Lista de Tarefas com Persistência</h1>
+  <input type="text" id="descricao" placeholder="Digite uma tarefa">
+  <button onclick="adicionarTarefa()">Adicionar</button>
+
+  <div class="tarefas" id="listaTarefas"></div>
+
+  <script>
+    // Inicializa a lista de tarefas a partir do localStorage
+    const tarefas = JSON.parse(localStorage.getItem("tarefas")) || [];
+
+    // Atualiza a lista ao carregar a página
+    atualizarLista();
+
+    // Função para adicionar uma nova tarefa
+    function adicionarTarefa() {
+      const descricaoInput = document.getElementById("descricao").value.trim();
+
+      // Validação da descrição
+      if (!descricaoInput) {
+        alert("Por favor, digite uma descrição válida!");
+        return;
+      }
+
+      // Adiciona a tarefa ao array com status inicial false
+      tarefas.push({ descricao: descricaoInput, status: false });
+      salvarTarefas();
+
+      // Atualiza a lista de tarefas
+      atualizarLista();
+
+      // Limpa o campo de texto
+      document.getElementById("descricao").value = "";
+    }
+
+    // Função para alternar o status de uma tarefa
+    function alternarStatus(index) {
+      tarefas[index].status = !tarefas[index].status;
+      salvarTarefas();
+      atualizarLista();
+    }
+
+    // Função para excluir uma tarefa
+    function excluirTarefa(index) {
+      tarefas.splice(index, 1);
+      salvarTarefas();
+      atualizarLista();
+    }
+
+    // Função para salvar tarefas no localStorage
+    function salvarTarefas() {
+      localStorage.setItem("tarefas", JSON.stringify(tarefas));
+    }
+
+    // Função para atualizar a lista de tarefas na página
+    function atualizarLista() {
+      const listaTarefas = document.getElementById("listaTarefas");
+      listaTarefas.innerHTML = "";
+
+      tarefas.forEach((tarefa, index) => {
+        const divTarefa = document.createElement("div");
+        divTarefa.className = `tarefa ${tarefa.status ? "concluida" : "nao-concluida"}`;
+
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = tarefa.status;
+        checkbox.onclick = () => alternarStatus(index);
+
+        const spanDescricao = document.createElement("span");
+        spanDescricao.textContent = tarefa.descricao;
+
+        const btnExcluir = document.createElement("button");
+        btnExcluir.textContent = "Excluir";
+        btnExcluir.className = "btn-excluir";
+        btnExcluir.onclick = () => excluirTarefa(index);
+
+        divTarefa.appendChild(checkbox);
+        divTarefa.appendChild(spanDescricao);
+        divTarefa.appendChild(btnExcluir);
+        listaTarefas.appendChild(divTarefa);
+      });
+    }
+  </script>
+</body>
+</html>
