@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Feed</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f2f5;
+        }
+
+        .profile-setup {
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .profile-setup.hidden {
+            display: none;
+        }
+
+        .post-form {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background-color: white;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            z-index: 1000;
+            display: none;
+        }
+
+        .post-form.visible {
+            display: block;
+        }
+
+        textarea {
+            width: 100%;
+            max-width: 600px;
+            height: 100px;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            resize: none;
+        }
+
+        .post-button, .save-profile {
+            padding: 8px 16px;
+            background-color: #1da1f2;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .post-button:hover, .save-profile:hover {
+            background-color: #1a91da;
+        }
+
+        .feed {
+            max-width: 600px;
+            margin: 150px auto 20px;
+            padding: 0 20px;
+            display: none;
+        }
+
+        .feed.visible {
+            display: block;
+        }
+
+        .post {
+            background-color: white;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .post-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .username {
+            font-weight: bold;
+            color: #1da1f2;
+        }
+
+        .cat-image {
+            max-width: 100%;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        .like-button {
+            background: none;
+            border: none;
+            color: #657786;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        .like-button:hover {
+            color: #1da1f2;
+        }
+
+        .avatar-option {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            margin: 5px;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .avatar-option.selected {
+            border-color: #1da1f2;
+        }
+    </style>
+</head>
+<body>
+    <div class="profile-setup" id="profileSetup">
+        <h2>Configure seu Perfil</h2>
+        <form id="profileForm">
+            <div style="margin-bottom: 15px;">
+                <label>Nome de Usuário:</label>
+                <input type="text" id="usernameInput" style="width: 100%; padding: 8px; margin-top: 5px;" required>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label>Escolha seu Avatar:</label>
+                <div id="avatarOptions" style="display: flex; flex-wrap: wrap;">
+                    <!-- Avatares serão adicionados via JS -->
+                </div>
+            </div>
+            <button type="submit" class="save-profile">Salvar Perfil</button>
+        </form>
+    </div>
+
+    <div class="post-form" id="postFormContainer">
+        <form id="postForm">
+            <textarea id="postText" placeholder="O que está pensando?"></textarea>
+            <button type="submit" class="post-button">Postar</button>
+        </form>
+    </div>
+
+    <div class="feed" id="feed">
+        <!-- Posts serão adicionados aqui dinamicamente -->
+    </div>
+
+    <script>
+        // Array para armazenar os posts
+        let posts = [];
+        let currentUser = {};
+
+        // Lista de avatares pré-definidos
+        const avatarOptions = [
+            'https://i.pravatar.cc/150?img=1',
+            'https://i.pravatar.cc/150?img=2',
+            'https://i.pravatar.cc/150?img=3',
+            'https://i.pravatar.cc/150?img=4',
+            'https://i.pravatar.cc/150?img=5'
+        ];
+
+        // Função para inicializar opções de avatar
+        function initAvatarOptions() {
+            const container = document.getElementById('avatarOptions');
+            avatarOptions.forEach((url, index) => {
+                const img = document.createElement('img');
+                img.src = url;
+                img.className = 'avatar-option';
+                img.dataset.index = index;
+                img.onclick = () => selectAvatar(index);
+                container.appendChild(img);
+            });
+        }
+
+        // Função para selecionar avatar
+        function selectAvatar(index) {
+            const options = document.querySelectorAll('.avatar-option');
+            options.forEach(option => option.classList.remove('selected'));
+            options[index].classList.add('selected');
+        }
+
+        // Função para buscar imagem de gato aleatória
+        async function getCatImage() {
+            try {
+                const response = await fetch('https://api.thecatapi.com/v1/images/search');
+                const data = await response.json();
+                return data[0].url;
+            } catch (error) {
+                console.error('Erro ao buscar imagem de gato:', error);
+                return 'https://via.placeholder.com/300';
+            }
+        }
+
+        // Função para renderizar os posts
+        function renderPosts() {
+            const feed = document.getElementById('feed');
+            feed.innerHTML = '';
+            
+            posts.sort((a, b) => b.date - a.date);
+            
+            posts.forEach((post, index) => {
+                const postElement = document.createElement('div');
+                postElement.className = 'post';
+                postElement.innerHTML = `
+                    <div class="post-header">
+                        <img src="${post.avatar}" alt="Avatar" class="avatar">
+                        <span class="username">${post.username}</span>
+                    </div>
+                    <p>${post.text}</p>
+                    <img src="${post.image}" alt="Gatinho fofo" class="cat-image">
+                    <button class="like-button" onclick="likePost(${index})">
+                        ❤️ ${post.likes}
+                    </button>
+                `;
+                feed.appendChild(postElement);
+            });
+        }
+
+        // Função para adicionar novo post
+        async function addPost(text) {
+            const catImage = await getCatImage();
+            const newPost = {
+                date: new Date(),
+                username: currentUser.username,
+                avatar: currentUser.avatar,
+                text: text,
+                image: catImage,
+                likes: 0
+            };
+            posts.push(newPost);
+            renderPosts();
+        }
+
+        // Função para curtir post
+        window.likePost = function(index) {
+            posts[index].likes++;
+            renderPosts();
+        }
+
+        // Event listener para o formulário de perfil
+        document.getElementById('profileForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const username = document.getElementById('usernameInput').value.trim();
+            const selectedAvatar = document.querySelector('.avatar-option.selected');
+            
+            if (username && selectedAvatar) {
+                currentUser = {
+                    username: username,
+                    avatar: avatarOptions[selectedAvatar.dataset.index]
+                };
+                
+                // Esconde setup e mostra feed
+                document.getElementById('profileSetup').classList.add('hidden');
+                document.getElementById('postFormContainer').classList.add('visible');
+                document.getElementById('feed').classList.add('visible');
+            }
+        });
+
+        // Event listener para o formulário de postagem
+        document.getElementById('postForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const postText = document.getElementById('postText').value.trim();
+            
+            if (postText) {
+                await addPost(postText);
+                document.getElementById('postText').value = '';
+            }
+        });
+
+        // Inicialização
+        initAvatarOptions();
+    </script>
+</body>
+</html>
