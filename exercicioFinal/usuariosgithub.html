@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Busca de Usuários GitHub</title>
+    <style>
+        /* Estilização básica */
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+
+        .search-area {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        input {
+            padding: 8px;
+            flex-grow: 1;
+        }
+
+        button {
+            padding: 8px 16px;
+            background-color: #0366d6;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #024ea4;
+        }
+
+        .user-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .user-item {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+
+        .no-results {
+            color: #666;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="search-area">
+            <input type="text" id="searchInput" placeholder="Digite o nome do usuário">
+            <button onclick="searchUsers()">Buscar</button>
+        </div>
+        <ul id="userList" class="user-list"></ul>
+    </div>
+
+    <script>
+        // Função para buscar usuários
+        async function searchUsers() {
+            const searchInput = document.getElementById('searchInput').value.trim();
+            const userList = document.getElementById('userList');
+            
+            // Limpa a lista anterior
+            userList.innerHTML = '';
+
+            if (!searchInput) {
+                userList.innerHTML = '<li class="no-results">Por favor, digite um termo de busca</li>';
+                return;
+            }
+
+            try {
+                // Faz a requisição à API do GitHub
+                const response = await fetch(`https://api.github.com/search/users?q=${encodeURIComponent(searchInput)}`, {
+                    headers: {
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Erro na requisição');
+                }
+
+                const data = await response.json();
+
+                // Verifica se encontrou usuários
+                if (data.items && data.items.length > 0) {
+                    // Cria elementos para cada usuário encontrado
+                    data.items.forEach(user => {
+                        const li = document.createElement('li');
+                        li.className = 'user-item';
+                        li.innerHTML = `
+                            <strong>${user.login}</strong><br>
+                            Perfil: <a href="${user.html_url}" target="_blank">${user.html_url}</a><br>
+                            Avatar: <img src="${user.avatar_url}" alt="${user.login}" width="50" height="50">
+                        `;
+                        userList.appendChild(li);
+                    });
+                } else {
+                    userList.innerHTML = '<li class="no-results">Não foram encontrados usuários para esta pesquisa</li>';
+                }
+
+            } catch (error) {
+                userList.innerHTML = '<li class="no-results">Erro ao buscar usuários: ' + error.message + '</li>';
+            }
+        }
+
+        // Adiciona evento para buscar ao pressionar Enter
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchUsers();
+            }
+        });
+    </script>
+</body>
+</html>
